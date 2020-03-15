@@ -1,0 +1,21 @@
+{
+  "name": "test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "parcel index.html",
+    "build": "parcel build index.html --public-url /ui-theory/",
+    "deploy": "gh-pages -d dist"
+  },
+  "author": "Joel Mun",
+  "license": "MIT",
+  "devDependencies": {
+    "gh-pages": "^2.2.0",
+    "parcel": "^1.12.4"
+  },
+  "browserslist": [
+    "last 30 Chrome versions"
+  ]
+}
