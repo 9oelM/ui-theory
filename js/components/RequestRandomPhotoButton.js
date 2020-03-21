@@ -1,7 +1,9 @@
 import { styled } from '../ui/styled.js';
 import { fetchSingleRandomPhoto } from '../api/api.js';
-import { useEffect, useState } from '../hooks/index.js';
+import { initializeHooks } from '../hooks/index.js';
 import { updateRandomPhoto } from '../global-state/actions.js';
+
+const { useEffect, useState } = initializeHooks();
 
 const Button = styled`button``
   width: max-content;
@@ -17,12 +19,7 @@ const RequestRandomPhotoButton = (store) => {
   const render = () => {
     const [isLoading, setIsLoading] = useState(false, render);
 
-    useEffect(() => {
-      if (isLoading.value) Button.textContent = 'loading'
-      else Button.textContent = 'click the button to request random image'
-    }, [isLoading.value]);
-
-    const handleButtonClick = async () => {
+    const getRandomPhoto = async () => {
       setIsLoading(true);
       const { data, error } = await fetchSingleRandomPhoto();
       if (error) console.error(error);
@@ -30,7 +27,14 @@ const RequestRandomPhotoButton = (store) => {
       setIsLoading(false);
     }
 
-    Button.onclick = handleButtonClick;
+    useEffect(() => {
+      getRandomPhoto();
+    }, []);
+
+    Button.onclick = getRandomPhoto;
+    
+    if (isLoading.value) Button.textContent = 'loading'
+    else Button.textContent = 'click the button to request random image'
 
     return Button;
   }

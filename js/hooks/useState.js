@@ -10,12 +10,12 @@ export const __useState = ({ renderCount, setRenderCount }) => {
     valueInClosure.value = newValue;
     if (renderCount.value > 0) {
       renderInClosure.render();
+      setRenderCount(renderCount.value + 1);
     }
-    setRenderCount(renderCount.value + 1);
   }
 
   return (initialValue, render) => {
-    if (renderCount.value === 0) {
+    if (!renderInClosure.render) {
       renderInClosure.render = render
       setter(initialValue);
     }
@@ -24,7 +24,7 @@ export const __useState = ({ renderCount, setRenderCount }) => {
    };
 };
 
-export const __useStateInteral = (() => {
+export const __useStateInteral = () => {
   const valueInClosure = {
     value: undefined,
   }
@@ -37,4 +37,4 @@ export const __useStateInteral = (() => {
     
       return [valueInClosure, setter];
    };
-})();
+}

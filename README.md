@@ -1,5 +1,11 @@
 # ui-theory
 
+## Demo
+
+![demo](./pics/demo.gif)
+
+Ok, so what's so special about this? Well, I made something like react and redux and used them to demonstrate how `UI = f(state)`.
+
 ## Rationale
 This repo contains no dependencies at all except `parcel` and `gh-pages` which are only used for development purposes.
 
@@ -8,13 +14,13 @@ But it's working, and I think that this is a good example to demonstrate how UI 
 
 The this repository effectively explains how:
 - to append and assemble dom elements together (a bit like `Component#render` or `ReactDOM.render`, despite HUGE difference in fact)
-- make some dead simple alternative of `styled-component`
+- to make some dead simple alternative of `styled-component`
 - hooks like `useEffect` and `useState` work
 - global state works
 - an UI component works and the fact that it is only a function (UI = f(state))
 - closure works to make all of things above happen
 
-FYI, I was too bothered to use typescript. Sorry. But it really shows that you can still make this far without typescript.
+FYI, I was too bothered to use typescript. Sorry. But it really shows that you can still make this far without any sophisticated stuffs and usage of typescript. Wanted to show that anybody can implement fundamental concepts of React.
 Plus, I think it would be better for beginners to look at js rather than ts (but still I believe ts is 10000 times better than js)
 
 ## Explanation
@@ -80,14 +86,13 @@ const Photo = styled`img```
 export default (store) => {
   const render = () => {
     const randomPhotoUrl = store.getState().randomPhotoUrl;
-
+    
     useEffect(() => {
-      if (randomPhotoUrl) {
-        Photo.src = randomPhotoUrl;
-      }
-    }, [randomPhotoUrl])
-
+      if (randomPhotoUrl) console.log(`The URL has changed to ${randomPhotoUrl}`);
+    }, [randomPhotoUrl]);
+    
     Photo.setAttribute('loading', 'lazy');
+    if (randomPhotoUrl) Photo.src = randomPhotoUrl;
 
     return renderDOM([
       Photo,
@@ -141,7 +146,7 @@ Lots of things can be improved here as well. And most importantly using multiple
 
 ## global-state/store.js
 
-You will keep all necessary in the closure, and return them to use them outside of the function.
+You will keep all necessary things in the closure, and return them to use them outside of the function.
 
 Basically it provides same things as redux does: `subscribe`, `getState`, `dispatch`.
 
@@ -184,20 +189,22 @@ const RequestRandomPhotoButton = (store) => {
   const render = () => {
     const [isLoading, setIsLoading] = useState(false, render);
 
-    useEffect(() => {
-      if (isLoading.value) Button.textContent = 'loading'
-      else Button.textContent = 'click the button to request random image'
-    }, [isLoading.value]);
-
-    const handleButtonClick = async () => {
+    const getRandomPhoto = async () => {
       setIsLoading(true);
-      const { data, error } = await fetchSingleRandomPhoto();
+      const { data, error } = await qfetchSingleRandomPhoto();
       if (error) console.error(error);
       store.dispatch(updateRandomPhoto(data.url));
       setIsLoading(false);
     }
 
-    Button.onclick = handleButtonClick;
+    useEffect(() => {
+      getRandomPhoto();
+    }, []);
+
+    Button.onclick = getRandomPhoto;
+    
+    if (isLoading.value) Button.textContent = 'loading'
+    else Button.textContent = 'click the button to request random image'
 
     return Button;
   }
@@ -250,14 +257,13 @@ Once you dispatch `updateRandomPhoto`, you will have to look at `PhotoViewer.js`
 export default (store) => {
   const render = () => {
     const randomPhotoUrl = store.getState().randomPhotoUrl;
-
+    
     useEffect(() => {
-      if (randomPhotoUrl) {
-        Photo.src = randomPhotoUrl;
-      }
-    }, [randomPhotoUrl])
-
+      if (randomPhotoUrl) console.log(`The URL has changed to ${randomPhotoUrl}`);
+    }, [randomPhotoUrl]);
+    
     Photo.setAttribute('loading', 'lazy');
+    if (randomPhotoUrl) Photo.src = randomPhotoUrl;
 
     return renderDOM([
       Photo,
@@ -266,6 +272,7 @@ export default (store) => {
 
   return render;
 };
+
 ```
 
 Again, it is going to show a different photo if `randomPhotoUrl` changes.
@@ -276,6 +283,8 @@ But remember, the action started from a different component. So if you explain i
 
 So... every time you dispatch `updateRandomPhoto`, PhotoViewer will essentially show you a different picture (which is the first rectangle in the flowchart)
 
+What about the side effect? Well, I could not think of a good example of a side effect, so I just put `console.log` in :) It's going to log every single time the URL has changed to something else.
+
 ## components/Layout.js
 
 We don't have a lot to talk here, but a good observation would let you know it's a pure function.
@@ -284,6 +293,42 @@ We don't have a lot to talk here, but a good observation would let you know it's
 
 This is just an util.
 
-## Summary
+## index.js
 
-Overall, the implementation still lacks a reconciliation and virtual DOM. But this repository serves an enough purpose to show what an UI is.
+```js
+import { renderDOM } from './ui/renderDOM.js'
+import { store } from './global-state/store.js'
+
+import RequestRandomPhotoButton from './components/RequestRandomPhotoButton.js'
+import Layout from './components/Layout.js'
+import PhotoViewer from './components/PhotoViewer.js'
+
+const main = () => {
+  const root = document.getElementById('root');
+
+  const render = (__store) => {
+    renderDOM(
+      [
+        Layout()(),
+        [
+          PhotoViewer(__store)(),
+          RequestRandomPhotoButton(__store)(),
+        ]
+      ],
+      root,
+    );
+  }
+    
+  store.subscribe(() => {
+    render(store);
+  })
+
+  render(store);
+}
+
+window.onload = main;
+```
+
+It just works, but one of the points that could be improved here is that every single time store gets updated, it is going to render the whole DOM tree again, which is inefficient as of now. But to do that, you need reconciliation and virtual DOM. But this repository serves an enough purpose to show what an UI is and how it works.
+
+Did not really cover `props` as well (although `__store` is essentially one of the props...), but it would be much simpler than all of this to implement. That work is left for you :)

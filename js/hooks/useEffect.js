@@ -1,9 +1,6 @@
-export const __useEffect = () => {
+export const __useEffect = ({ renderCount, setRenderCount }) => {
   const depsInClosure = {
     deps: [],
-  }
-  const isFirstRenderWrapper = {
-    isFirstRender: true,
   }
   const updateDepsInClosure = (deps) => {
     depsInClosure.deps = []
@@ -11,14 +8,12 @@ export const __useEffect = () => {
   }
 
   return (callback, deps) => {
-    if (isFirstRenderWrapper.isFirstRender) {
-      updateDepsInClosure(deps);
-    }
-    if (isFirstRenderWrapper.isFirstRender || depsInClosure.deps.some((dep, idx) => dep !== deps[idx])) {
+    const isFirstRender = renderCount.value === 0;
+    const areDepsChanged = depsInClosure.deps.some((dep, idx) => dep !== deps[idx]);
+    if (isFirstRender || areDepsChanged) {
       callback();
       updateDepsInClosure(deps);
-      isFirstRenderWrapper.isFirstRender = false;
-
+      setRenderCount(renderCount.value + 1);
       return;
     }
   }
