@@ -1,0 +1,1 @@
+{"version":3,"sources":["css/styles.css"],"names":[],"mappings":"AAAA;AACA;AACA;AACA;AACA;AACA;AACA","file":"styles.b61e60ae.css","sourceRoot":"..","sourcesContent":["#root, body, html {\n  height: 100%;\n  width: 100%;\n  padding: 0;\n  margin: 0;\n  /* background-color: blue; */\n}"]}

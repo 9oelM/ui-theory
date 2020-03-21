@@ -1,0 +1,1 @@
+{"version":3,"sources":["styles.css"],"names":[],"mappings":"AAAA,gBACE,WAAY,CACZ,UAAW,CACX,SAAU,CACV,QAEF","file":"styles.d3e76039.css","sourceRoot":"..","sourcesContent":["#root, body, html {\n  height: 100%;\n  width: 100%;\n  padding: 0;\n  margin: 0;\n  /* background-color: blue; */\n}"]}
