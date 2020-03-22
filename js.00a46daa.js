@@ -194,30 +194,10 @@ exports.store = void 0;
 var _reducer = require("./reducer.js");
 
 const createStore = reducer => {
-  /**
-   * interface RootState {
-   *   counter: number;
-   * }
-   * 
-   * rootState: RootState
-   */
   let rootState = {};
-  /**
-   * listeners: Readonly<Array<Function>>
-   */
-
   const listenersOnDispatch = [];
-  /**
-   * getState: () => RootState | undefined
-   */
 
   const getState = () => rootState;
-  /**
-   * type Unsubscriber = () => void;
-   * 
-   * subscribe: (listener: Readonly<Function>) => Unsubscriber;
-   */
-
 
   const subscribe = listener => {
     listenersOnDispatch.push(listener);
@@ -227,17 +207,6 @@ const createStore = reducer => {
       if (index > -1) listenersOnDispatch.splice(indexToDelete, 1);
     };
   };
-  /**
-   * enum ActionTypes {
-   *   CLICK = 'CLICK';
-   * }
-   * 
-   * interface Action {
-   *   type: ActionTypes;
-   *   payload: any;
-   * }
-   */
-
 
   const dispatch = action => {
     rootState = reducer(rootState, action);
@@ -369,12 +338,12 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.__useEffect = void 0;
 
-const __useEffect = () => {
+const __useEffect = ({
+  renderCount,
+  setRenderCount
+}) => {
   const depsInClosure = {
     deps: []
-  };
-  const isFirstRenderWrapper = {
-    isFirstRender: true
   };
 
   const updateDepsInClosure = deps => {
@@ -383,14 +352,13 @@ const __useEffect = () => {
   };
 
   return (callback, deps) => {
-    if (isFirstRenderWrapper.isFirstRender) {
-      updateDepsInClosure(deps);
-    }
+    const isFirstRender = renderCount.value === 0;
+    const areDepsChanged = depsInClosure.deps.some((dep, idx) => dep !== deps[idx]);
 
-    if (isFirstRenderWrapper.isFirstRender || depsInClosure.deps.some((dep, idx) => dep !== deps[idx])) {
+    if (isFirstRender || areDepsChanged) {
       callback();
       updateDepsInClosure(deps);
-      isFirstRenderWrapper.isFirstRender = false;
+      setRenderCount(renderCount.value + 1);
       return;
     }
   };
@@ -421,13 +389,12 @@ const __useState = ({
 
     if (renderCount.value > 0) {
       renderInClosure.render();
+      setRenderCount(renderCount.value + 1);
     }
-
-    setRenderCount(renderCount.value + 1);
   };
 
   return (initialValue, render) => {
-    if (renderCount.value === 0) {
+    if (!renderInClosure.render) {
       renderInClosure.render = render;
       setter(initialValue);
     }
@@ -438,7 +405,7 @@ const __useState = ({
 
 exports.__useState = __useState;
 
-const __useStateInteral = (() => {
+const __useStateInteral = () => {
   const valueInClosure = {
     value: undefined
   };
@@ -451,7 +418,7 @@ const __useStateInteral = (() => {
     setter(initialValue);
     return [valueInClosure, setter];
   };
-})();
+};
 
 exports.__useStateInteral = __useStateInteral;
 },{}],"js/hooks/index.js":[function(require,module,exports) {
@@ -460,18 +427,16 @@ exports.__useStateInteral = __useStateInteral;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.useState = exports.useEffect = void 0;
+exports.initializeHooks = void 0;
 
 var _useEffect = require("./useEffect.js");
 
 var _useState = require("./useState.js");
 
-const {
-  useEffect,
-  useState
-} = (() => {
+const initializeHooks = () => {
   // setState just for internal use
-  const [renderCount, setRenderCount] = (0, _useState.__useStateInteral)(0); // for external use
+  const useStateInternal = (0, _useState.__useStateInteral)();
+  const [renderCount, setRenderCount] = useStateInternal(0); // for external use
 
   const useEffect = (0, _useEffect.__useEffect)({
     renderCount,
@@ -485,10 +450,9 @@ const {
     useEffect,
     useState
   };
-})();
+};
 
-exports.useState = useState;
-exports.useEffect = useEffect;
+exports.initializeHooks = initializeHooks;
 },{"./useEffect.js":"js/hooks/useEffect.js","./useState.js":"js/hooks/useState.js"}],"js/global-state/actions.js":[function(require,module,exports) {
 "use strict";
 
@@ -505,7 +469,7 @@ const updateRandomPhoto = randomPhotoUrl => ({
 });
 
 exports.updateRandomPhoto = updateRandomPhoto;
-},{"./actionTypes.js":"js/global-state/actionTypes.js"}],"js/components/Button.js":[function(require,module,exports) {
+},{"./actionTypes.js":"js/global-state/actionTypes.js"}],"js/components/RequestRandomPhotoButton.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -525,6 +489,10 @@ function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try
 
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
 
+const {
+  useEffect,
+  useState
+} = (0, _index.initializeHooks)();
 const Button = (0, _styled.styled)`button``
   width: max-content;
   min-width: 250px;
@@ -537,12 +505,9 @@ const Button = (0, _styled.styled)`button``
 
 const RequestRandomPhotoButton = store => {
   const render = () => {
-    const [isLoading, setIsLoading] = (0, _index.useState)(false, render);
-    (0, _index.useEffect)(() => {
-      if (isLoading.value) Button.textContent = 'loading';else Button.textContent = 'click the button to request random image';
-    }, [isLoading.value]);
+    const [isLoading, setIsLoading] = useState(false, render);
 
-    const handleButtonClick = /*#__PURE__*/function () {
+    const getRandomPhoto = /*#__PURE__*/function () {
       var _ref = _asyncToGenerator(function* () {
         setIsLoading(true);
         const {
@@ -554,12 +519,16 @@ const RequestRandomPhotoButton = store => {
         setIsLoading(false);
       });
 
-      return function handleButtonClick() {
+      return function getRandomPhoto() {
         return _ref.apply(this, arguments);
       };
     }();
 
-    Button.onclick = handleButtonClick;
+    useEffect(() => {
+      getRandomPhoto();
+    }, []);
+    Button.onclick = getRandomPhoto;
+    if (isLoading.value) Button.textContent = 'loading';else Button.textContent = 'click the button to request random image';
     return Button;
   };
 
@@ -604,22 +573,29 @@ var _renderDOM = require("../ui/renderDOM.js");
 
 var _index = require("../hooks/index.js");
 
+const {
+  useEffect
+} = (0, _index.initializeHooks)();
 const PhotoContainer = (0, _styled.styled)`figure``
   border: 1px solid black;
   min-width: 500px;
   min-height: 500px;
+  display: flex;
 `;
-const Photo = (0, _styled.styled)`img```;
+const Photo = (0, _styled.styled)`img``
+  max-width: 500px;
+  max-height: 500px;
+  margin: auto;
+`;
 
 var _default = store => {
   const render = () => {
     const randomPhotoUrl = store.getState().randomPhotoUrl;
-    (0, _index.useEffect)(() => {
-      if (randomPhotoUrl) {
-        Photo.src = randomPhotoUrl;
-      }
+    useEffect(() => {
+      if (randomPhotoUrl) console.log(`The URL has changed to ${randomPhotoUrl}`);
     }, [randomPhotoUrl]);
     Photo.setAttribute('loading', 'lazy');
+    if (randomPhotoUrl) Photo.src = randomPhotoUrl;
     return (0, _renderDOM.renderDOM)([Photo], PhotoContainer);
   };
 
@@ -634,7 +610,7 @@ var _renderDOM = require("./ui/renderDOM.js");
 
 var _store = require("./global-state/store.js");
 
-var _Button = _interopRequireDefault(require("./components/Button.js"));
+var _RequestRandomPhotoButton = _interopRequireDefault(require("./components/RequestRandomPhotoButton.js"));
 
 var _Layout = _interopRequireDefault(require("./components/Layout.js"));
 
@@ -646,7 +622,7 @@ const main = () => {
   const root = document.getElementById('root');
 
   const render = __store => {
-    (0, _renderDOM.renderDOM)([(0, _Layout.default)()(), [(0, _PhotoViewer.default)(__store)(), (0, _Button.default)(__store)()]], root);
+    (0, _renderDOM.renderDOM)([(0, _Layout.default)()(), [(0, _PhotoViewer.default)(__store)(), (0, _RequestRandomPhotoButton.default)(__store)()]], root);
   };
 
   _store.store.subscribe(() => {
@@ -657,7 +633,7 @@ const main = () => {
 };
 
 window.onload = main;
-},{"./ui/renderDOM.js":"js/ui/renderDOM.js","./global-state/store.js":"js/global-state/store.js","./components/Button.js":"js/components/Button.js","./components/Layout.js":"js/components/Layout.js","./components/PhotoViewer.js":"js/components/PhotoViewer.js"}],"node_modules/parcel/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"./ui/renderDOM.js":"js/ui/renderDOM.js","./global-state/store.js":"js/global-state/store.js","./components/RequestRandomPhotoButton.js":"js/components/RequestRandomPhotoButton.js","./components/Layout.js":"js/components/Layout.js","./components/PhotoViewer.js":"js/components/PhotoViewer.js"}],"node_modules/parcel/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -685,7 +661,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50666" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49812" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
